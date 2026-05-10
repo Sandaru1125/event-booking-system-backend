@@ -2,7 +2,7 @@
 
 const prisma = require('../config/db');
 
-// ─── Dashboard stats ──────────────────────────────────────────────────────────
+
 
 const getDashboardStats = async (req, res, next) => {
   try {
@@ -38,8 +38,6 @@ const getDashboardStats = async (req, res, next) => {
     next(err);
   }
 };
-
-// ─── Manage users ─────────────────────────────────────────────────────────────
 
 const getAllUsers = async (req, res, next) => {
   try {

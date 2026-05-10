@@ -1,5 +1,4 @@
-// src/controllers/auth.controller.js
-// Controllers are thin — they just call the service and send the response.
+
 
 const authService = require('../services/auth.service');
 

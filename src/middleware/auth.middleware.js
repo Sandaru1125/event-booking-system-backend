@@ -1,6 +1,4 @@
-// src/middleware/auth.middleware.js
-// Reads the Bearer token from Authorization header, verifies it, and attaches
-// the decoded user payload to req.user so controllers can use it.
+
 
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config/env');
