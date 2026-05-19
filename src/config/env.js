@@ -1,5 +1,4 @@
-// src/config/env.js
-// Validates required env vars at startup so the app fails fast with a clear message.
+
 
 require('dotenv').config();
 
@@ -7,6 +6,9 @@ const required = [
   'DATABASE_URL',
   'JWT_SECRET',
   'JWT_REFRESH_SECRET',
+  'IMAGEKIT_PUBLIC_KEY',
+  'IMAGEKIT_PRIVATE_KEY',
+  'IMAGEKIT_URL_ENDPOINT',
 ];
 
 for (const key of required) {
@@ -30,4 +32,7 @@ module.exports = {
   EMAIL_USER: process.env.EMAIL_USER,
   EMAIL_PASS: process.env.EMAIL_PASS,
   EMAIL_FROM: process.env.EMAIL_FROM,
+  IMAGEKIT_PUBLIC_KEY: process.env.IMAGEKIT_PUBLIC_KEY,
+  IMAGEKIT_PRIVATE_KEY: process.env.IMAGEKIT_PRIVATE_KEY,
+  IMAGEKIT_URL_ENDPOINT: process.env.IMAGEKIT_URL_ENDPOINT,
 };

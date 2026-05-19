@@ -30,8 +30,15 @@ const getEvents = async ({ page = 1, limit = 10, category, status, search }) => 
     prisma.event.count({ where }),
   ]);
 
+  const transformedEvents = events.map(event => ({
+    ...event,
+    image: event.imageUrl,
+    capacity: event.totalSeats,
+    category: event.category?.name
+  }));
+
   return {
-    events,
+    events: transformedEvents,
     pagination: {
       total,
       page: Number(page),
@@ -61,27 +68,84 @@ const getEventById = async (id) => {
     throw err;
   }
 
-  return event;
+  const eventData = {
+    ...event,
+    image: event.imageUrl,
+    capacity: event.totalSeats,
+    categoryName: event.category?.name,
+    category: event.category?.name, // Also set category for EditEvent.jsx line 39
+  };
+
+  if (event.date) {
+    const d = new Date(event.date);
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    eventData.time = `${hours}:${minutes}`;
+  }
+
+  return eventData;
 };
 
 // ─── Create event ─────────────────────────────────────────────────────────────
 
 const createEvent = async (data, imageUrl) => {
-  const category = await prisma.category.findUnique({ where: { id: data.categoryId } });
-  if (!category) {
-    const err = new Error('Category not found.');
-    err.status = 404;
+  console.log('🔍 [EVENT SERVICE] createEvent called');
+  console.log('  - Data keys:', Object.keys(data));
+  console.log('  - Image URL:', imageUrl ? 'Yes' : 'No');
+  
+  let categoryId = data.categoryId;
+
+  // If categoryId is not provided, try to find or create category by name
+  if (!categoryId && data.category) {
+    const categoryName = data.category.trim();
+    console.log('🏷️  Looking up category:', categoryName);
+    let category = await prisma.category.findUnique({ where: { name: categoryName } });
+    if (!category) {
+      console.log('📝 Category not found, creating new one...');
+      category = await prisma.category.create({ data: { name: categoryName } });
+      console.log('✅ Category created:', category.id);
+    } else {
+      console.log('✅ Category found:', category.id);
+    }
+    categoryId = category.id;
+  }
+
+  if (!categoryId) {
+    console.error('❌ No category ID available');
+    const err = new Error('Category is required.');
+    err.status = 400;
     throw err;
   }
 
-  return prisma.event.create({
+  // Handle date and time merging
+  let eventDate = new Date(data.date);
+  if (data.time) {
+    const [hours, minutes] = data.time.split(':');
+    eventDate.setHours(parseInt(hours), parseInt(minutes));
+    console.log('📅 Date set to:', eventDate.toISOString());
+  }
+
+  // Clean up data for Prisma
+  const { category: catName, time, ...prismaData } = data;
+  
+  console.log('💾 Preparing event data for DB:');
+  console.log('  - Title:', prismaData.title);
+  console.log('  - Price:', prismaData.price);
+  console.log('  - Total Seats:', prismaData.totalSeats);
+  console.log('  - Category ID:', categoryId);
+  
+  const result = await prisma.event.create({
     data: {
-      ...data,
-      date: new Date(data.date),
+      ...prismaData,
+      categoryId,
+      date: eventDate,
       imageUrl: imageUrl || null,
     },
     include: { category: true },
   });
+  
+  console.log('✅ Event created in database:', result.id);
+  return result;
 };
 
 // ─── Update event ─────────────────────────────────────────────────────────────
@@ -95,7 +159,27 @@ const updateEvent = async (id, data, imageUrl) => {
   }
 
   const updateData = { ...data };
-  if (data.date) updateData.date = new Date(data.date);
+  
+  if (data.category) {
+    const categoryName = data.category.trim();
+    let category = await prisma.category.findUnique({ where: { name: categoryName } });
+    if (!category) {
+      category = await prisma.category.create({ data: { name: categoryName } });
+    }
+    updateData.categoryId = category.id;
+    delete updateData.category;
+  }
+
+  if (data.date || data.time) {
+    const baseDate = data.date ? new Date(data.date) : new Date(existing.date);
+    if (data.time) {
+      const [hours, minutes] = data.time.split(':');
+      baseDate.setHours(parseInt(hours), parseInt(minutes));
+    }
+    updateData.date = baseDate;
+    delete updateData.time;
+  }
+
   if (imageUrl) updateData.imageUrl = imageUrl;
 
   return prisma.event.update({

@@ -11,12 +11,12 @@ const { createEventSchema, updateEventSchema } = require('../validators/event.va
 // Public
 router.get('/',              ctrl.getEvents);
 router.get('/categories',    ctrl.getCategories);
+router.post('/categories',   protect, isAdmin, ctrl.createCategory);
 router.get('/:id',           ctrl.getEvent);
 
 // Admin only
 router.post('/',             protect, isAdmin, upload.single('image'), validate(createEventSchema), ctrl.createEvent);
 router.put('/:id',           protect, isAdmin, upload.single('image'), validate(updateEventSchema), ctrl.updateEvent);
 router.delete('/:id',        protect, isAdmin, ctrl.deleteEvent);
-router.post('/categories',   protect, isAdmin, ctrl.createCategory);
 
 module.exports = router;

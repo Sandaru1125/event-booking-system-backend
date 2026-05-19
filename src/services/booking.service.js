@@ -8,9 +8,12 @@ const emailService = require('./email.service');
 // ─── Create booking ───────────────────────────────────────────────────────────
 
 const createBooking = async ({ userId, eventId, seats }) => {
-  return prisma.$transaction(async (tx) => {
-    // Lock the event row to prevent race conditions
-    const event = await tx.event.findUnique({ where: { id: eventId } });
+  return prisma.$transaction(
+    async (tx) => {
+      // Lock the event row to prevent race conditions
+      const event = await tx.event.findUniqueOrThrow({
+        where: { id: eventId },
+      });
 
     if (!event) {
       const err = new Error('Event not found.');

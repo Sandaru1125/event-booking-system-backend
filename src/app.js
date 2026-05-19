@@ -1,8 +1,7 @@
 // src/app.js
 // Sets up Express with all middleware and routes.
 
-require('./config/env'); // validate env vars first
-
+const config = require('./config/env');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -19,7 +18,7 @@ const app = express();
 // ─── Security middleware ──────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: config.CLIENT_URL,
   credentials: true,
 }));
 
